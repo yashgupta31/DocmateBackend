@@ -38,12 +38,11 @@ doctorRouter.post('/add', upload.single('image'), async(req, res) => {
 })
 
 doctorRouter.get('/getdoctors', async(req, res)=>{
-    // console.log(req.query.specialist)
-    const {specialist}= req.query;
+    // const {specialist}= req.query;
      // If specialist is 'all' or not provided, fetch all doctors
-     const filter = specialist === 'all' || !specialist ? {} : { speciality: specialist };
+    //  const filter = specialist === 'all' || !specialist ? {} : { speciality: specialist };
     try {
-        const doctors= await DoctorModel.find(filter);
+        const doctors= await DoctorModel.find();
         res.status(200).json({success: true, data: doctors})
     } catch (error) {
         res.status(500).json({message: error.message})
@@ -75,6 +74,20 @@ doctorRouter.get('/singledoctor/:id', async(req, res)=>{
         res.status(500).json({message: error.message})
     }
 })
+
+doctorRouter.get('/get-available-doctors', async(req, res)=>{
+    // console.log(req.query.specialist)
+    const {specialist}= req.query;
+     // If specialist is 'all' or not provided, fetch all doctors
+     const filter = specialist === 'all' || !specialist ? {} : { speciality: specialist };
+    //  filter.isAvailable= true;
+    try {
+        const doctors= await DoctorModel.find(filter);
+        res.status(200).json({success: true, data: doctors})
+    } catch (error) {
+        res.status(500).json({message: error.message})
+    }
+});
 
 
 module.exports = doctorRouter;
