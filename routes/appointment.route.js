@@ -11,68 +11,45 @@ appointmentRouter.post('/book-appointment/:doctorId', verifyToken, async(req, re
     try {
         const appointment= new AppointmentModel({doctorId, patientId, date, time, fees});
         await appointment.save()
-        res.status(201).json({message: 'appointment Booked successfully, wait for approval'});
+        res.status(201).json({message: 'appointment Booked successfully, wait for approval', appointment: appointment});
     } catch (error) {
         res.status(500).json({message: 'Fail to book appointment'})
     }
 })
 
 // const isAppointmentCompleted = (appointmentDate, appointmentTime) => {
-//     const [day, month, year] = appointmentDate.split("-").map(Number); // Parse date
-//     const [time, meridian] = appointmentTime.split(" "); // Separate time and AM/PM
-//     let [hours, minutes] = time.split(":").map(Number); // Split hours and minutes
-
-//     // Convert 12-hour time to 24-hour format
-//     if (meridian === "PM" && hours !== 12) {
-//         hours += 12;
-//     } else if (meridian === "AM" && hours === 12) {
-//         hours = 0;
-//     }
-
-//     // Create a Date object for the appointment
-//     const appointmentDateTime = new Date(year, month - 1, day, hours, minutes);
-
-//     // Get the current date and time
-//     const currentDateTime = new Date();
-
-//     console.log(appointmentDateTime, currentDateTime)
-
-//     // Return true if the appointment date and time are in the past
-//     return appointmentDateTime < currentDateTime;
-// };
-
-
-
-// appointmentRouter.get('/all-appointments', async(req, res)=>{
 //     try {
-//         const appointments = await AppointmentModel.find()
-//             .populate('doctorId', '-password')
-//             .populate('patientId');
+//         // Parse the date in dd-mm-yyyy format
+//         const [year, month, day] = appointmentDate.split("-").map(Number);
 
-//         // Update status for completed appointments
-//         const updatedAppointments = await Promise.all(
-//             appointments.map(async (appointment) => {
-//                 if (
-//                     appointment.status !== "Completed" &&
-//                     appointment.status !== "Cancelled" &&
-//                     appointment.status == "Pending" &&
-//                     isAppointmentCompleted(appointment.date, appointment.time)
-//                 ) {
-//                     appointment.status = "Completed";
-//                     await appointment.save();
-//                 }
-//                 return appointment;
-//             })
-//         );
+//         // Parse the time in hh:mm AM/PM format
+//         const [time, meridian] = appointmentTime.split(" ");
+//         let [hours, minutes] = time.split(":").map(Number);
 
-//         res.status(200).json({
-//             message: 'All appointments retrieved successfully',
-//             appointments: updatedAppointments
-//         });
+//         // Convert to 24-hour format
+//         if (meridian === "PM" && hours !== 12) {
+//             hours += 12;
+//         } else if (meridian === "AM" && hours === 12) {
+//             hours = 0;
+//         }
+
+//         // Construct a valid ISO-compliant date string
+//         const formattedDateTime = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
+//         // Create a Date object
+//         const appointmentDateTime = new Date(formattedDateTime);
+ 
+//         // Get the current date and time
+//         const currentDateTime = new Date();
+//         // console.log(`current date ${currentDateTime}`)
+//         // console.log(`appointment date ${appointmentDateTime}`)
+
+//         // Return true if the appointment is in the past
+//         return appointmentDateTime < currentDateTime;
 //     } catch (error) {
-//         res.status(500).json({message: 'Internal server error/ fail to get all appointments'});
+//         console.error("Error in isAppointmentCompleted:", error);
+//         return false;
 //     }
-// })
+// };
 
 const isAppointmentCompleted = (appointmentDate, appointmentTime) => {
     try {
@@ -90,15 +67,11 @@ const isAppointmentCompleted = (appointmentDate, appointmentTime) => {
             hours = 0;
         }
 
-        // Construct a valid ISO-compliant date string
-        const formattedDateTime = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
-        // Create a Date object
-        const appointmentDateTime = new Date(formattedDateTime);
- 
+        // Construct a valid date object in local timezone
+        const appointmentDateTime = new Date(year, month - 1, day, hours, minutes);
+
         // Get the current date and time
         const currentDateTime = new Date();
-        // console.log(`current date ${currentDateTime}`)
-        // console.log(`appointment date ${appointmentDateTime}`)
 
         // Return true if the appointment is in the past
         return appointmentDateTime < currentDateTime;
@@ -109,27 +82,90 @@ const isAppointmentCompleted = (appointmentDate, appointmentTime) => {
 };
 
 
+// appointmentRouter.get('/all-appointments', async (req, res) => {
+//     try {
+        
+
+//         // Fetch all appointments with necessary populated fields
+//         const appointments = await AppointmentModel.find()
+//             .populate('doctorId', '-password')
+//             .populate('patientId');
+
+//         const completedAppointments = [];
+
+//         // Classify appointments into completed or expired
+//         for (const appointment of appointments) {
+//             if (isAppointmentCompleted(appointment.date, appointment.time)) {
+//                 if (appointment.status === 'Confirmed') {
+//                     completedAppointments.push(appointment._id);
+//                 }
+//             }
+//         }
+
+//         // Perform bulk updates for 'Completed'
+//         if (completedAppointments.length > 0) {
+//             await AppointmentModel.updateMany(
+//                 { _id: { $in: completedAppointments } },
+//                 { $set: { status: 'Completed' } }
+//             );
+//         }
+
+//         res.status(200).json({
+//             message: 'All appointments retrieved successfully',
+//             appointments: await AppointmentModel.find()
+//                 .populate('doctorId', '-password')
+//                 .populate('patientId') 
+//         });
+//     } catch (error) {
+//         console.error("Error fetching appointments:", error);
+//         res.status(500).json({
+//             message: 'Internal server error / Failed to retrieve all appointments'
+//         });
+//     }
+// });
 
 appointmentRouter.get('/all-appointments', async (req, res) => {
     try {
+        // Fetch all appointments with necessary populated fields
         const appointments = await AppointmentModel.find()
             .populate('doctorId', '-password')
             .populate('patientId');
 
-         // Iterate and update completed appointments status as 'Completed'
-         for (const appointment of appointments) {
-            if (
-                isAppointmentCompleted(appointment.date, appointment.time) &&
-                appointment.status === 'Confirmed'
-            ) {
-                appointment.status = 'Completed';
-                await appointment.save();
+        const completedAppointments = [];
+        const expiredAppointments = [];
+
+        // Classify appointments into completed or expired
+        for (const appointment of appointments) {
+            if (isAppointmentCompleted(appointment.date, appointment.time)) {
+                if (appointment.status === 'Confirmed') {
+                    completedAppointments.push(appointment._id);
+                } else if (appointment.status === 'Pending') {
+                    expiredAppointments.push(appointment._id);
+                }
             }
+        }
+
+        // Perform bulk updates for 'Completed' and 'Expired' statuses
+        if (completedAppointments.length > 0) {
+            await AppointmentModel.updateMany(
+                { _id: { $in: completedAppointments } },
+                { $set: { status: 'Completed' } }
+            );
+        }
+
+        if (expiredAppointments.length > 0) {
+            await AppointmentModel.updateMany(
+                { _id: { $in: expiredAppointments } },
+                { $set: { status: 'Expired' } }
+            );
         }
 
         res.status(200).json({
             message: 'All appointments retrieved successfully',
-            appointments: appointments
+            appointments: await AppointmentModel.find()
+                .populate('doctorId', '-password')
+                .populate('patientId','-password') // Reload the updated appointments
+                .sort({ _id: -1 }) // Sort appointments in descending order by _id (creation time)
         });
     } catch (error) {
         console.error("Error fetching appointments:", error);
@@ -139,11 +175,55 @@ appointmentRouter.get('/all-appointments', async (req, res) => {
     }
 });
 
+appointmentRouter.get('/selected-doctors-appointments/:doctorId', async(req, res)=>{
+    const {doctorId}= req.params;
+
+    try {
+        const appointments= await AppointmentModel.find({doctorId});
+        res.status(200).json({message: 'particular doctors appointment retrieve successfully', appointments})
+    } catch (error) {
+        res.status(500).json({message: 'Internal server error'})
+    }
+})
+
 appointmentRouter.get('/my-appointments',verifyToken, async(req, res)=>{
     const {patientId}= req.body;
     try {
         const appointments= await AppointmentModel.find({patientId}).populate('doctorId', '-password');
-        res.status(200).json({message: 'your appointments get successfully', appointments})
+
+        const completedAppointments = [];
+        const expiredAppointments = [];
+
+        // Classify appointments into completed or expired automatically as per current time
+        for (const appointment of appointments) {
+            if (isAppointmentCompleted(appointment.date, appointment.time)) {
+                if (appointment.status === 'Confirmed') {
+                    completedAppointments.push(appointment._id);
+                } else if (appointment.status === 'Pending') {
+                    expiredAppointments.push(appointment._id);
+                }
+            }
+        }
+
+        // Perform bulk updates for 'Completed' and 'Expired' statuses
+        if (completedAppointments.length > 0) {
+            await AppointmentModel.updateMany(
+                { _id: { $in: completedAppointments } },
+                { $set: { status: 'Completed' } }
+            );
+        }
+
+        if (expiredAppointments.length > 0) {
+            await AppointmentModel.updateMany(
+                { _id: { $in: expiredAppointments } },
+                { $set: { status: 'Expired' } }
+            );
+        }
+
+        res.status(200).json({message: 'your appointments get successfully', 
+            appointments: await AppointmentModel.find({ patientId })
+            .populate('doctorId', '-password')
+        })
     } catch (error) {
         res.status(500).json({message: 'Internal server error/ fail to get your appointments'})
     }

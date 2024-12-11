@@ -80,7 +80,7 @@ doctorRouter.get('/get-available-doctors', async(req, res)=>{
     const {specialist}= req.query;
      // If specialist is 'all' or not provided, fetch all doctors
      const filter = specialist === 'all' || !specialist ? {} : { speciality: specialist };
-    //  filter.isAvailable= true;
+     filter.isAvailable= true;
     try {
         const doctors= await DoctorModel.find(filter);
         res.status(200).json({success: true, data: doctors})
@@ -88,6 +88,16 @@ doctorRouter.get('/get-available-doctors', async(req, res)=>{
         res.status(500).json({message: error.message})
     }
 });
+
+// ---------get 10 doctors to show in home page---------
+doctorRouter.get('/get-10-doctors', async(req, res)=>{
+    try {
+        const doctors= await DoctorModel.find({isAvailable: true}).limit(10);
+        res.status(200).json({doctors})
+    } catch (error) {
+        res.status(500).json({message: `Internal server error ${error.message}`})
+    }
+})
 
 
 module.exports = doctorRouter;

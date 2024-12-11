@@ -6,7 +6,7 @@ const appointmentSchema= new mongoose.Schema({
     date: {type: String, require: true},
     time: {type: String, require: true},
     fees: {type: Number, require: true},
-    status: {type: String, enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed' ], default: 'Pending'},
+    status: {type: String, enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed', 'Expired' ], default: 'Pending'},
 
 },
 {timestamps: true} // Adds `createdAt` and `updatedAt` fields
