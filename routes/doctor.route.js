@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const DoctorModel = require('../models/doctor.model');
 const doctorRouter = express.Router();
-const cloudinary= require('cloudinary')
+const cloudinary= require('cloudinary').v2;
 const dotenv= require('dotenv')
 dotenv.config()
 
@@ -28,13 +28,27 @@ const upload = multer({ storage });
 doctorRouter.post('/add', upload.single('image'), async(req, res) => {
     const { name, email, password, fees, speciality, experience, address, about } = req.body;
     try {
-        const cloudinaryResult = await cloudinary.uploader.upload_stream(
-            { folder: 'doctors' },
-            (error, result) => {
-                if (error) throw new Error('Failed to upload image to Cloudinary');
-                return result;
-            }
-        ).end(req.file.buffer);
+        // const cloudinaryResult = await cloudinary.uploader.upload_stream(
+        //     { folder: 'doctors' },
+        //     (error, result) => {
+        //         if (error) throw new Error('Failed to upload image to Cloudinary');
+        //         return result;
+        //     }
+        // ).end(req.file.buffer);
+         // Wrap the Cloudinary upload process in a Promise
+         const cloudinaryResult = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                { folder: 'doctors' },
+                (error, result) => {
+                    if (error) {
+                        reject(new Error('Failed to upload image to Cloudinary'));
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+            uploadStream.end(req.file.buffer);
+        });
     
         const doctor = new DoctorModel({
             name,
