@@ -3,6 +3,7 @@ const mongoose= require('mongoose');
 const doctorSchema= new mongoose.Schema({
     name: {type: String, require: true},
     image: {type: String, require: true},
+    // imageType: {type: String, require: true},
     email: {type: String, require: true, unique: true},
     password: {type: String, require: true},
     fees: {type: Number, require: true},

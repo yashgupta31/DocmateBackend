@@ -17,40 +17,6 @@ appointmentRouter.post('/book-appointment/:doctorId', verifyToken, async(req, re
     }
 })
 
-// const isAppointmentCompleted = (appointmentDate, appointmentTime) => {
-//     try {
-//         // Parse the date in dd-mm-yyyy format
-//         const [year, month, day] = appointmentDate.split("-").map(Number);
-
-//         // Parse the time in hh:mm AM/PM format
-//         const [time, meridian] = appointmentTime.split(" ");
-//         let [hours, minutes] = time.split(":").map(Number);
-
-//         // Convert to 24-hour format
-//         if (meridian === "PM" && hours !== 12) {
-//             hours += 12;
-//         } else if (meridian === "AM" && hours === 12) {
-//             hours = 0;
-//         }
-
-//         // Construct a valid ISO-compliant date string
-//         const formattedDateTime = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
-//         // Create a Date object
-//         const appointmentDateTime = new Date(formattedDateTime);
- 
-//         // Get the current date and time
-//         const currentDateTime = new Date();
-//         // console.log(`current date ${currentDateTime}`)
-//         // console.log(`appointment date ${appointmentDateTime}`)
-
-//         // Return true if the appointment is in the past
-//         return appointmentDateTime < currentDateTime;
-//     } catch (error) {
-//         console.error("Error in isAppointmentCompleted:", error);
-//         return false;
-//     }
-// };
-
 const isAppointmentCompleted = (appointmentDate, appointmentTime) => {
     try {
         // Parse the date in dd-mm-yyyy format
@@ -80,49 +46,6 @@ const isAppointmentCompleted = (appointmentDate, appointmentTime) => {
         return false;
     }
 };
-
-
-// appointmentRouter.get('/all-appointments', async (req, res) => {
-//     try {
-        
-
-//         // Fetch all appointments with necessary populated fields
-//         const appointments = await AppointmentModel.find()
-//             .populate('doctorId', '-password')
-//             .populate('patientId');
-
-//         const completedAppointments = [];
-
-//         // Classify appointments into completed or expired
-//         for (const appointment of appointments) {
-//             if (isAppointmentCompleted(appointment.date, appointment.time)) {
-//                 if (appointment.status === 'Confirmed') {
-//                     completedAppointments.push(appointment._id);
-//                 }
-//             }
-//         }
-
-//         // Perform bulk updates for 'Completed'
-//         if (completedAppointments.length > 0) {
-//             await AppointmentModel.updateMany(
-//                 { _id: { $in: completedAppointments } },
-//                 { $set: { status: 'Completed' } }
-//             );
-//         }
-
-//         res.status(200).json({
-//             message: 'All appointments retrieved successfully',
-//             appointments: await AppointmentModel.find()
-//                 .populate('doctorId', '-password')
-//                 .populate('patientId') 
-//         });
-//     } catch (error) {
-//         console.error("Error fetching appointments:", error);
-//         res.status(500).json({
-//             message: 'Internal server error / Failed to retrieve all appointments'
-//         });
-//     }
-// });
 
 appointmentRouter.get('/all-appointments', async (req, res) => {
     try {
