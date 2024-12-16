@@ -2,16 +2,17 @@ const express= require('express');
 const bcrypt= require('bcrypt');
 const UserModel = require('../models/user.model');
 const jwt= require('jsonwebtoken');
-const dotenv= require('dotenv');
 const multer = require('multer');
+const cloudinary= require('cloudinary').v2;
+const dotenv= require('dotenv');
 dotenv.config()
 
 const userRouter= express.Router()
 
 const storage= multer.diskStorage({
-    destination: (req, file, cb)=>{
-        cb(null, 'uploads/UserProfiles/');
-    },
+    // destination: (req, file, cb)=>{
+    //     cb(null, 'uploads/UserProfiles/');
+    // },
     filename: (req, file, cb)=>{
         cb(null, `${Date.now()}-${file.originalname}`)
     }
@@ -53,7 +54,7 @@ userRouter.post('/login', async(req, res)=>{
         }
 
         const token= jwt.sign(
-            {userId: user._id, email: user.email, name: user.name, role: user.role, image: user.image, phone: user.phone, address: user.address,  gender: user.address, DOB: user.DOB}, 
+            {_id: user._id, email: user.email, name: user.name, role: user.role, image: user.image, phone: user.phone, address: user.address,  gender: user.address, DOB: user.DOB}, 
             process.env.JWT_SECRET
         );
         // console.log(token)
@@ -67,12 +68,20 @@ userRouter.post('/login', async(req, res)=>{
 userRouter.patch('/update-profile/:userId', upload.single('profilePic'), async(req, res) => {
     const { name, phone, address, gender, DOB } = req.body;
     const { userId } = req.params;
-    const image= req.file? `uploads/UserProfiles/${req.file.filename}`: undefined;
+    // const image= req.file? `uploads/UserProfiles/${req.file.filename}`: undefined;
 //   console.log(name, phone, address, gender, DOB, userId)
     try {
+        let img= '';
+        if(req.file){
+            const cloudinaryResult= await cloudinary.uploader.upload(req.file.path, {
+                folder: 'patient_images'
+            })
+            img= cloudinaryResult.secure_url;
+        }
+       
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
-            { name, phone, address, gender, DOB, image },
+            {name, phone, address, gender, DOB, image: img},
             { new: true } // Return the updated document
         ); 
 
