@@ -63,7 +63,7 @@ doctorRouter.get('/getdoctors', async (req, res) => {
         const doctors = await DoctorModel.find();
         // const doctorsWithImages = doctors.map((doctor) => ({
         //     ...doctor.toObject(),
-        //     image: `data:${doctor.imageType};base64,${doctor.image.toString('base64')}`
+        //     image: `data:${doctor.imageType};base64,${doctor.image.toString('base64')}`;
         // }))
         res.status(200).json({ success: true, data: doctors })
     } catch (error) {
