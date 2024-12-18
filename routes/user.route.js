@@ -65,36 +65,36 @@ userRouter.post('/login', async(req, res)=>{
     }
 })
 
-userRouter.patch('/update-profile/:userId', upload.single('profilePic'), async(req, res) => {
+userRouter.patch('/update-profile/:userId', upload.single('profilePic'), async (req, res) => {
     const { name, phone, address, gender, DOB } = req.body;
     const { userId } = req.params;
-    // const image= req.file? `uploads/UserProfiles/${req.file.filename}`: undefined;
-//   console.log(name, phone, address, gender, DOB, userId)
+
     try {
-        let img= '';
-        if(req.file){
-            const cloudinaryResult= await cloudinary.uploader.upload(req.file.path, {
-                folder: 'patient_images'
-            })
-            img= cloudinaryResult.secure_url;
+        let updateData = { name, phone, address, gender, DOB };
+
+        if (req.file) {
+            const cloudinaryResult = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'patient_images',
+            });
+            updateData.image = cloudinaryResult.secure_url;
         }
-       
+
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
-            {name, phone, address, gender, DOB, image: img},
+            updateData,
             { new: true } // Return the updated document
-        ); 
+        );
 
         if (!updatedUser) {
             return res.status(404).json({ message: 'User not found' });
         }
-        // console.log(updatedUser)
+
         res.json({ message: 'Profile updated successfully', data: updatedUser });
     } catch (error) {
-      console.error('Error updating profile:', error);
-      res.status(500).json({ message: 'Internal server error' });
+        console.error('Error updating profile:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-  });
+});
 
 
 module.exports= userRouter
